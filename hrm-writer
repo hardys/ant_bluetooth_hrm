@@ -1,0 +1,39 @@
+#!/usr/bin/env python3
+# Simple script to write HR data to a sqlite DB
+# TODO wire in reading real data from ANT+ HRM
+
+import sqlite3
+import os
+
+DB_PATH = '/tmp/hrm_data.sqlite'
+
+# clean up any previous /tmp/hrm_data.sqlite
+if os.path.exists(DB_PATH):
+  os.unlink(DB_PATH)
+
+try:
+  # Create DB with one table to store hrm data
+  db = sqlite3.connect(DB_PATH)
+  cursor = db.cursor()
+  cursor.execute('''
+      CREATE TABLE hrm(id INTEGER PRIMARY KEY,
+                       hr INTEGER)
+  ''')
+  db.commit()
+
+  hr = 1
+  while True:
+    hr += 1
+    cursor.execute('''INSERT INTO hrm(hr)
+                      VALUES(?)''', (hr,))
+    print("HR=%s" % hr)
+    db.commit()
+    if hr >= 150:
+      hr = 0
+except Exception as e:
+    # Roll back any change if something goes wrong
+    db.rollback()
+    raise e
+finally:
+    # Close the db connection
+    db.close()
